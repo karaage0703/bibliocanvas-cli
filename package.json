@@ -1,0 +1,38 @@
+{
+  "name": "bibliocanvas-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for BiblioCanvas - manage your book library from the command line",
+  "type": "module",
+  "bin": {
+    "bibliocanvas": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "bibliocanvas",
+    "bookshelf",
+    "library",
+    "cli",
+    "books"
+  ],
+  "author": "karaage0703",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karaage0703/bibliocanvas-cli.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "open": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
