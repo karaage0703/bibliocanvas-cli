@@ -43,6 +43,10 @@ bibliocanvas list
 bibliocanvas list --status READ           # 読了した本のみ
 bibliocanvas list -q "ChatGPT"            # タイトル・著者で検索
 bibliocanvas list --sort title --dir asc  # タイトル順
+bibliocanvas list --shelf <shelfId>       # 特定の本棚の書籍のみ
+bibliocanvas list --rating 5              # ★5の本のみ
+bibliocanvas list --limit 20              # 20件まで表示
+bibliocanvas list --shelf <id> --rating 4 --status READ  # 組み合わせ
 
 # ISBN で追加
 bibliocanvas add --isbn 9784065371534
@@ -76,6 +80,9 @@ bibliocanvas delete <bookId>
 # 本棚一覧
 bibliocanvas shelf list
 
+# 本棚の中身を表示
+bibliocanvas shelf books <shelfId>
+
 # 本棚を作成
 bibliocanvas shelf create "AI・機械学習" -d "AI関連の本をまとめた本棚"
 
@@ -87,6 +94,19 @@ bibliocanvas shelf remove-book <shelfId> <bookId>
 
 # 本棚を削除
 bibliocanvas shelf delete <shelfId>
+```
+
+### 公開本棚の閲覧（ログイン不要）
+
+```bash
+# 公開本棚一覧
+bibliocanvas public shelves
+bibliocanvas public shelves --user karaage0703  # ユーザー指定
+bibliocanvas public shelves --limit 10          # 件数制限
+
+# 公開本棚の詳細（書籍一覧＋メモ）
+bibliocanvas public shelf <shelfId>
+bibliocanvas public shelf <shelfId> --json      # JSON出力
 ```
 
 ### 共通オプション

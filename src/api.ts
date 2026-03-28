@@ -81,6 +81,93 @@ async function apiRequest(
   return data;
 }
 
+async function publicApiRequest(
+  path: string,
+  env: Env,
+  query?: Record<string, string>
+): Promise<unknown> {
+  const baseUrl = getApiBaseUrl(env);
+  let url = `${baseUrl}${path}`;
+
+  if (query) {
+    const params = new URLSearchParams(
+      Object.entries(query).filter(([, v]) => v !== undefined)
+    );
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+  }
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      (data as { error?: string }).error || `API error: ${response.status}`
+    );
+  }
+
+  return data;
+}
+
+// ==================== Public Shelves (no auth required) ====================
+
+export interface PublicShelf {
+  id: string;
+  name: string;
+  description: string;
+  ownerUsername: string;
+  ownerDisplayName: string;
+  slug: string;
+  bookCount: number;
+  likeCount: number;
+  commentCount: number;
+  updatedAt: string | null;
+  books?: PublicBook[];
+}
+
+export interface PublicBook {
+  bookId: string;
+  title: string;
+  authors: string;
+  productImage: string;
+  rating: number | null;
+  memo: string | null;
+  readStatus: string | null;
+}
+
+export async function listPublicShelves(
+  env: Env,
+  options?: { limit?: number }
+): Promise<{ shelves: PublicShelf[]; total: number }> {
+  const query: Record<string, string> = {};
+  if (options?.limit) query.limit = options.limit.toString();
+  return publicApiRequest('/public/shelves', env, query) as Promise<{
+    shelves: PublicShelf[];
+    total: number;
+  }>;
+}
+
+export async function listUserPublicShelves(
+  env: Env,
+  username: string
+): Promise<{ shelves: PublicShelf[]; total: number }> {
+  return publicApiRequest(`/public/users/${username}/shelves`, env) as Promise<{
+    shelves: PublicShelf[];
+    total: number;
+  }>;
+}
+
+export async function getPublicShelf(
+  env: Env,
+  shelfId: string,
+  options?: { books?: boolean }
+): Promise<PublicShelf> {
+  const query: Record<string, string> = {};
+  if (options?.books === false) query.books = 'false';
+  return publicApiRequest(`/public/shelves/${shelfId}`, env, query) as Promise<PublicShelf>;
+}
+
 // ==================== Books ====================
 
 export async function listBooks(
@@ -127,7 +214,16 @@ export async function addBookBySearch(
 
 export async function addBookManual(
   env: Env,
-  data: { title: string; authors?: string; readStatus?: string; rating?: number; memo?: string }
+  data: {
+    title: string;
+    authors?: string;
+    readStatus?: string;
+    rating?: number;
+    memo?: string;
+    bookId?: string;
+    source?: string;
+    productImage?: string;
+  }
 ): Promise<Book> {
   return apiRequest('POST', '/books', env, data) as Promise<Book>;
 }
