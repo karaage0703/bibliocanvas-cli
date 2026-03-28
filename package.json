@@ -1,6 +1,6 @@
 {
-  "name": "bibliocanvas-cli",
-  "version": "0.1.0",
+  "name": "bibliocanvas",
+  "version": "0.2.0",
   "description": "CLI tool for BiblioCanvas - manage your book library from the command line",
   "type": "module",
   "bin": {

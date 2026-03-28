@@ -5,13 +5,13 @@
 ## インストール
 
 ```bash
-npm install -g bibliocanvas-cli
+npm install -g bibliocanvas
 ```
 
 または `npx` で直接実行:
 
 ```bash
-npx bibliocanvas-cli <command>
+npx bibliocanvas <command>
 ```
 
 ## 使い方
