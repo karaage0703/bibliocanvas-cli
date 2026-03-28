@@ -80,18 +80,50 @@ program
   .option('--dev', 'Use development environment')
   .option('-q, --query <text>', 'Search by title or author')
   .option('-s, --status <status>', 'Filter by status (READ,READING,UNREAD,BACKLOG)')
+  .option('--shelf <shelfId>', 'Filter by bookshelf ID')
+  .option('--rating <n>', 'Filter by minimum rating (1-5)')
+  .option('--limit <n>', 'Limit number of results')
   .option('--sort <field>', 'Sort by field (title, authors, addedDate, rating)', 'addedDate')
   .option('--dir <direction>', 'Sort direction (asc, desc)', 'desc')
   .option('--json', 'Output as JSON')
   .action(async (options) => {
     try {
       const env = getEnv(options);
-      const result = await api.listBooks(env, {
+      let result = await api.listBooks(env, {
         q: options.query,
         status: options.status,
         sort: options.sort,
         dir: options.dir,
       });
+
+      // Filter by shelf
+      if (options.shelf) {
+        const shelvesResult = await api.listShelves(env);
+        const shelf = shelvesResult.shelves.find((s) => s.id === options.shelf);
+        if (!shelf) {
+          console.error(`Shelf not found: ${options.shelf}`);
+          process.exit(1);
+        }
+        const bookIds = new Set(shelf.books);
+        result = {
+          books: result.books.filter((b) => bookIds.has(b.bookId)),
+          total: 0,
+        };
+        result.total = result.books.length;
+      }
+
+      // Filter by minimum rating
+      if (options.rating) {
+        const minRating = parseInt(options.rating, 10);
+        result.books = result.books.filter((b) => (b.rating || 0) >= minRating);
+        result.total = result.books.length;
+      }
+
+      // Limit results
+      if (options.limit) {
+        const limit = parseInt(options.limit, 10);
+        result.books = result.books.slice(0, limit);
+      }
 
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
@@ -127,6 +159,9 @@ program
   .option('--title <title>', 'Add by title (manual or search)')
   .option('--search <query>', 'Search Google Books and choose')
   .option('--authors <authors>', 'Author(s) for manual add')
+  .option('--book-id <bookId>', 'Specify book ID (e.g. Kindle ASIN)')
+  .option('--source <source>', 'Book source (kindle_import, manual_add, google_books)', 'manual_add')
+  .option('--image <url>', 'Cover image URL')
   .option('--status <status>', 'Initial read status', 'UNREAD')
   .option('--json', 'Output as JSON')
   .action(async (options) => {
@@ -175,6 +210,9 @@ program
           title: options.title,
           authors: options.authors,
           readStatus: options.status,
+          bookId: options.bookId,
+          source: options.source,
+          productImage: options.image,
         });
         if (options.json) {
           console.log(JSON.stringify(book, null, 2));
@@ -321,6 +359,46 @@ shelf
   });
 
 shelf
+  .command('books <shelfId>')
+  .description('List books in a bookshelf')
+  .option('--dev', 'Use development environment')
+  .option('--json', 'Output as JSON')
+  .action(async (shelfId: string, options) => {
+    try {
+      const env = getEnv(options);
+      const shelvesResult = await api.listShelves(env);
+      const s = shelvesResult.shelves.find((sh) => sh.id === shelfId);
+      if (!s) {
+        console.error(`Shelf not found: ${shelfId}`);
+        process.exit(1);
+      }
+
+      const allBooks = await api.listBooks(env, {});
+      const bookIds = new Set(s.books);
+      const books = allBooks.books.filter((b) => bookIds.has(b.bookId));
+
+      if (options.json) {
+        console.log(JSON.stringify({ shelf: s.name, books, total: books.length }, null, 2));
+        return;
+      }
+
+      console.log(`\n📖 ${s.name} (${books.length} books)\n`);
+
+      for (const book of books) {
+        const status = STATUS_LABELS[book.readStatus] || book.readStatus;
+        const rating = book.rating ? '★'.repeat(book.rating) + '☆'.repeat(5 - book.rating) : '';
+        console.log(`  ${book.title}`);
+        console.log(`    ${book.authors} | ${status}${rating ? ` | ${rating}` : ''}`);
+        console.log(`    ID: ${book.bookId}`);
+        console.log('');
+      }
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+shelf
   .command('create <name>')
   .description('Create a bookshelf')
   .option('--dev', 'Use development environment')
@@ -380,6 +458,84 @@ shelf
       const env = getEnv(options);
       await api.removeBookFromShelf(env, shelfId, bookId);
       console.log(`✓ Removed book ${bookId} from shelf ${shelfId}`);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// ==================== Public Shelves ====================
+
+const publicCmd = program
+  .command('public')
+  .description('Browse public bookshelves (no login required)');
+
+publicCmd
+  .command('shelves')
+  .description('List public bookshelves')
+  .option('--dev', 'Use development environment')
+  .option('--limit <n>', 'Maximum number of shelves', '20')
+  .option('--user <username>', 'Filter by username')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    const env = getEnv(options);
+    try {
+      const result = options.user
+        ? await api.listUserPublicShelves(env, options.user)
+        : await api.listPublicShelves(env, { limit: parseInt(options.limit, 10) });
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      console.log(`\n🌐 ${result.total} public shelves\n`);
+      for (const s of result.shelves) {
+        console.log(`  ${s.name} (${s.bookCount} books)`);
+        if (s.description) console.log(`    ${s.description}`);
+        console.log(`    @${s.ownerUsername} | ❤️ ${s.likeCount} | 💬 ${s.commentCount}`);
+        console.log(`    ID: ${s.id}`);
+        console.log();
+      }
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+publicCmd
+  .command('shelf <shelfId>')
+  .description('View a public bookshelf with books')
+  .option('--dev', 'Use development environment')
+  .option('--json', 'Output as JSON')
+  .action(async (shelfId: string, options) => {
+    const env = getEnv(options);
+    try {
+      const shelf = await api.getPublicShelf(env, shelfId);
+
+      if (options.json) {
+        console.log(JSON.stringify(shelf, null, 2));
+        return;
+      }
+
+      console.log(`\n🌐 ${shelf.name} by @${shelf.ownerUsername}`);
+      if (shelf.description) console.log(`  ${shelf.description}`);
+      console.log(`  ${shelf.bookCount} books | ❤️ ${shelf.likeCount} | 💬 ${shelf.commentCount}\n`);
+
+      if (shelf.books) {
+        for (const book of shelf.books) {
+          const status = book.readStatus ? STATUS_LABELS[book.readStatus] || '' : '';
+          const rating = book.rating ? '★'.repeat(book.rating) + '☆'.repeat(5 - book.rating) : '';
+          console.log(`  ${book.title}`);
+          console.log(`    ${book.authors}${status ? ` | ${status}` : ''}${rating ? ` | ${rating}` : ''}`);
+          if (book.memo) {
+            const summary = book.memo.split('===')[0].trim();
+            if (summary) console.log(`    💬 ${summary}`);
+          }
+          console.log(`    ID: ${book.bookId}`);
+          console.log();
+        }
+      }
     } catch (err) {
       console.error(`Error: ${(err as Error).message}`);
       process.exit(1);
