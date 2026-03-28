@@ -36,11 +36,6 @@ npx bibliocanvas list --json                   # JSON出力
 npx bibliocanvas add --title "タイトル" --authors "著者" --book-id <ASIN> --source kindle_import --image <画像URL>
 ```
 
-**ISBN指定:**
-```bash
-npx bibliocanvas add --isbn 9784065371534
-```
-
 **手動入力:**
 ```bash
 npx bibliocanvas add --title "タイトル" --authors "著者"
