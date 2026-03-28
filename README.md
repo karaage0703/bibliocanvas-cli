@@ -48,18 +48,9 @@ bibliocanvas list --rating 5              # ★5の本のみ
 bibliocanvas list --limit 20              # 20件まで表示
 bibliocanvas list --shelf <id> --rating 4 --status READ  # 組み合わせ
 
-# ISBN で追加
-bibliocanvas add --isbn 9784065371534
-
-# タイトルで検索して追加
-bibliocanvas add --search "面倒なことはChatGPT"
-
-# 手動で追加
+# 書籍を追加
 bibliocanvas add --title "本のタイトル" --authors "著者名"
-
-# Google Books 検索（追加はしない）
-bibliocanvas search "Pythonプログラミング"
-bibliocanvas search 9784065371534 --isbn
+bibliocanvas add --title "本のタイトル" --authors "著者名" --book-id <ASIN> --source kindle_import --image <画像URL>
 
 # 読了ステータス更新
 bibliocanvas update <bookId> --status READ
