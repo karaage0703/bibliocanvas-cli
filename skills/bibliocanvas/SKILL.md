@@ -47,6 +47,7 @@ npx bibliocanvas add --title "タイトル" --authors "著者"
 npx bibliocanvas update <bookId> --status READ
 npx bibliocanvas update <bookId> --rating 5
 npx bibliocanvas update <bookId> --memo "感想テキスト"
+npx bibliocanvas update <bookId> --image <画像URL>
 ```
 
 ### 書籍の削除

@@ -237,6 +237,8 @@ program
   .option('--status <status>', 'Read status (NONE,UNREAD,READING,READ,BACKLOG)')
   .option('--rating <rating>', 'Rating (1-5, or 0 to remove)')
   .option('--memo <memo>', 'Memo text (or "" to remove)')
+  .option('--image <url>', 'Cover image URL')
+  .option('--source <source>', 'Source (kindle_import, manual_add, google_books)')
   .option('--json', 'Output as JSON')
   .action(async (bookId: string, options) => {
     try {
@@ -251,9 +253,11 @@ program
       if (options.memo !== undefined) {
         updates.memo = options.memo === '' ? null : options.memo;
       }
+      if (options.image) updates.productImage = options.image;
+      if (options.source) updates.source = options.source;
 
       if (Object.keys(updates).length === 0) {
-        console.error('No updates specified. Use --status, --rating, or --memo');
+        console.error('No updates specified. Use --status, --rating, --memo, --image, or --source');
         process.exit(1);
       }
 
