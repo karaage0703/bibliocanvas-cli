@@ -154,6 +154,50 @@ Markdown対応。
 
 `===` の前が「ひとこと」、後が「読書ログ」。`===` がない場合はメモ全体が「ひとこと」として扱われる。
 
+## 本棚比較
+
+2人のユーザーの公開本棚を比較して、共通の本や一致率を算出する。
+
+### 手順
+
+1. 両者の公開本棚の書籍を取得:
+```bash
+npx bibliocanvas public shelf <shelfId1> --json > /tmp/user1.json
+npx bibliocanvas public shelf <shelfId2> --json > /tmp/user2.json
+```
+
+2. Pythonで比較:
+```python
+import json, re
+
+with open('/tmp/user1.json') as f:
+    user1 = json.load(f).get('books', [])
+with open('/tmp/user2.json') as f:
+    user2 = json.load(f).get('books', [])
+
+# タイトル完全一致
+t1 = set(b['title'] for b in user1)
+t2 = set(b['title'] for b in user2)
+exact = t1 & t2
+
+# シリーズ単位の一致（巻数表記を除去して比較）
+def get_series(title):
+    t = re.sub(r'[\(（].*?[\)）]', '', title)
+    t = re.sub(r'[\s　]*\d+巻?$', '', t)
+    t = re.sub(r'[\s　]*第?\d+[巻集話]', '', t)
+    return t.strip()
+
+s1 = set(get_series(b['title']) for b in user1)
+s2 = set(get_series(b['title']) for b in user2)
+series = {s for s in s1 & s2 if len(s) > 2}
+
+print(f"タイトル完全一致: {len(exact)}冊")
+print(f"シリーズ一致: {len(series)}作品")
+print(f"一致率: {len(series)/len(s1)*100:.1f}%")
+for t in sorted(exact):
+    print(f"  {t}")
+```
+
 ## 補足
 
 - トークンは自動リフレッシュ。期限切れで再ログイン不要。
