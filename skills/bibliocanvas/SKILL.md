@@ -85,9 +85,13 @@ Web検索で書名を調べ、タイトル・著者・ASINを特定する。
 
 ### 2. 表紙画像を取得する
 
-AmazonのASINから表紙画像URLを取得:
+AmazonのOG画像が最も確実:
 ```bash
-curl -s -L -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" "https://www.amazon.co.jp/dp/{ASIN}" | grep -oP 'https://m\.media-amazon\.com/images/I/[^"]+\.jpg' | head -1
+# 方法1: OG画像（最も確実）
+curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Accept-Language: ja-JP,ja;q=0.9" "https://www.amazon.co.jp/dp/{ASIN}" | grep -oP 'property="og:image"[^>]*content="\K[^"]+' | head -1
+
+# 方法2: 検索結果ページから（OG画像が取れない場合）
+curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Accept-Language: ja-JP,ja;q=0.9" "https://www.amazon.co.jp/s?k={ASIN}&i=digital-text" | grep -oP 'https://m\.media-amazon\.com/images/I/[A-Za-z0-9+._-]+\.jpg' | head -1
 ```
 
 ### 3. 重複チェック
@@ -112,9 +116,13 @@ AmazonのURLから取得: `https://www.amazon.co.jp/dp/{ASIN}`
 
 ### 2. 表紙画像を取得する
 
-AmazonのASINから表紙画像URLを取得:
+AmazonのOG画像が最も確実:
 ```bash
-curl -s -L -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" "https://www.amazon.co.jp/dp/{ASIN}" | grep -oP 'https://m\.media-amazon\.com/images/I/[^"]+\.jpg' | head -1
+# 方法1: OG画像（最も確実）
+curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Accept-Language: ja-JP,ja;q=0.9" "https://www.amazon.co.jp/dp/{ASIN}" | grep -oP 'property="og:image"[^>]*content="\K[^"]+' | head -1
+
+# 方法2: 検索結果ページから（OG画像が取れない場合）
+curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Accept-Language: ja-JP,ja;q=0.9" "https://www.amazon.co.jp/s?k={ASIN}&i=digital-text" | grep -oP 'https://m\.media-amazon\.com/images/I/[A-Za-z0-9+._-]+\.jpg' | head -1
 ```
 
 ### 3. 登録する
