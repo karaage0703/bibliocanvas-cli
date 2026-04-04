@@ -161,11 +161,25 @@ export async function listUserPublicShelves(
 export async function getPublicShelf(
   env: Env,
   shelfId: string,
-  options?: { books?: boolean }
+  options?: { books?: boolean; allBooks?: boolean }
 ): Promise<PublicShelf> {
   const query: Record<string, string> = {};
   if (options?.books === false) query.books = 'false';
-  return publicApiRequest(`/public/shelves/${shelfId}`, env, query) as Promise<PublicShelf>;
+  const shelf = await publicApiRequest(`/public/shelves/${shelfId}`, env, query) as PublicShelf & { hasMore?: boolean };
+
+  // 全書籍を取得する場合、ページネーションで全ページ取得
+  if (options?.allBooks !== false && shelf.books && (shelf as unknown as Record<string, unknown>).hasMore) {
+    let offset = shelf.books.length;
+    while (true) {
+      const page = await publicApiRequest(`/public/shelves/${shelfId}`, env, { offset: offset.toString() }) as PublicShelf & { hasMore?: boolean };
+      if (!page.books || page.books.length === 0) break;
+      shelf.books.push(...page.books);
+      offset += page.books.length;
+      if (!page.hasMore) break;
+    }
+  }
+
+  return shelf;
 }
 
 // ==================== Books ====================
@@ -312,4 +326,23 @@ export async function removeBookFromShelf(
     `/shelves/${shelfId}/books/${bookId}`,
     env
   ) as Promise<{ shelfId: string; bookId: string; removed: boolean }>;
+}
+
+export async function publishShelf(
+  env: Env,
+  shelfId: string,
+  slug?: string
+): Promise<{ published: boolean; shelfId: string; slug: string; url: string; bookCount: number }> {
+  return apiRequest('POST', `/shelves/${shelfId}/publish`, env, { slug }) as Promise<{
+    published: boolean; shelfId: string; slug: string; url: string; bookCount: number;
+  }>;
+}
+
+export async function unpublishShelf(
+  env: Env,
+  shelfId: string
+): Promise<{ unpublished: boolean; shelfId: string }> {
+  return apiRequest('POST', `/shelves/${shelfId}/unpublish`, env) as Promise<{
+    unpublished: boolean; shelfId: string;
+  }>;
 }
