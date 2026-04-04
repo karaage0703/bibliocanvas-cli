@@ -64,6 +64,9 @@ npx bibliocanvas shelf books <shelfId>                   # 本棚の中身を表
 npx bibliocanvas shelf add-book <shelfId> <bookId>       # 本棚に書籍追加
 npx bibliocanvas shelf remove-book <shelfId> <bookId>    # 本棚から書籍削除
 npx bibliocanvas shelf create --name "本棚名"            # 新規本棚作成
+npx bibliocanvas shelf publish <shelfId>                 # 本棚を公開
+npx bibliocanvas shelf publish <shelfId> --slug my-shelf # slug指定で公開
+npx bibliocanvas shelf unpublish <shelfId>               # 本棚を非公開に
 ```
 
 ### 公開本棚の閲覧（ログイン不要）

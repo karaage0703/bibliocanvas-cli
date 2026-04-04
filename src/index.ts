@@ -468,6 +468,38 @@ shelf
     }
   });
 
+shelf
+  .command('publish <shelfId>')
+  .description('Publish a shelf (make it public)')
+  .option('--dev', 'Use development environment')
+  .option('--slug <slug>', 'URL slug for the public shelf')
+  .action(async (shelfId: string, options) => {
+    try {
+      const env = getEnv(options);
+      const result = await api.publishShelf(env, shelfId, options.slug);
+      console.log(`✓ Published: ${result.url}`);
+      console.log(`  ${result.bookCount} books`);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+shelf
+  .command('unpublish <shelfId>')
+  .description('Unpublish a shelf (make it private)')
+  .option('--dev', 'Use development environment')
+  .action(async (shelfId: string, options) => {
+    try {
+      const env = getEnv(options);
+      await api.unpublishShelf(env, shelfId);
+      console.log(`✓ Unpublished shelf ${shelfId}`);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
 // ==================== Public Shelves ====================
 
 const publicCmd = program
